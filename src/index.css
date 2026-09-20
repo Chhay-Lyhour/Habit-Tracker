@@ -1,111 +1,276 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource/nunito/400.css";
+@import "@fontsource/nunito/600.css";
+@import "@fontsource/nunito/700.css";
+@import "@fontsource/nunito/800.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+
+    /* Brand ramp — see the palette note in :root before changing these. */
+    --color-grass: var(--grass);
+    --color-grass-bright: var(--grass-bright);
+    --color-grass-edge: var(--grass-edge);
+    --color-sky: var(--sky);
+    --color-sky-bright: var(--sky-bright);
+    --color-sky-edge: var(--sky-edge);
+    --color-streak: var(--streak);
+    --color-streak-bright: var(--streak-bright);
+    --color-streak-edge: var(--streak-edge);
+    --color-danger: var(--danger);
+    --color-danger-bright: var(--danger-bright);
+    --color-danger-edge: var(--danger-edge);
+
+    /* Chunky rounding: 16px cards, 12px controls. */
+    --radius-card: 1rem;
+    --radius-control: 0.75rem;
+
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    /* ---------------------------------------------------------------
+     * Brand palette — each hue comes as a "bright" and a "fill".
+     *
+     * The spec colours are vivid, which means white text on them fails
+     * WCAG AA: #58CC02 measures 2.1:1, #1CB0F6 2.5:1, #FF9600 2.2:1 and
+     * #FF4B4B 3.3:1. So each hue is split in two:
+     *
+     *   --x-bright  the exact spec colour. Used only where no text sits
+     *               on top: ticks, progress, the flame, focus glow.
+     *   --x         the same hue darkened until white text on it clears
+     *               4.5:1. Used for anything that carries a label.
+     *   --x-edge    darker still, for the 4px 3D press edge.
+     *
+     * Measured white-on-fill ratios: grass 4.6, sky 4.6, streak 4.6,
+     * danger 4.6. To use a spec colour on buttons instead, point --x at
+     * the --x-bright value and accept the AA failure on those labels.
+     * --------------------------------------------------------------- */
+    --grass-bright: #58CC02;
+    --grass: #428407;
+    --grass-edge: #2F6100;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+    --sky-bright: #1CB0F6;
+    --sky: #0C7CB8;
+    --sky-edge: #095C89;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    --streak-bright: #FF9600;
+    --streak: #B35F00;
+    --streak-edge: #8A4900;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
+    --danger-bright: #FF4B4B;
+    --danger: #D63B3B;
+    --danger-edge: #A62B2B;
+
+    --background: #F7F7F7;
+    --foreground: #4B4B4B;
+    --card: #FFFFFF;
+    --card-foreground: #4B4B4B;
+    --popover: #FFFFFF;
+    --popover-foreground: #4B4B4B;
+
+    --primary: var(--grass);
+    --primary-foreground: #FFFFFF;
+    --secondary: #F0F0F0;
+    --secondary-foreground: #4B4B4B;
+    --muted: #F0F0F0;
+    --muted-foreground: #767676;
+    --accent: #EAF7DC;
+    --accent-foreground: #2F6100;
+    --destructive: var(--danger);
+
+    --border: #E5E5E5;
+    --input: #E5E5E5;
+    --ring: var(--grass-bright);
+
+    --chart-1: var(--grass-bright);
+    --chart-2: var(--sky);
+    --chart-3: var(--streak);
+    --chart-4: var(--danger);
+    --chart-5: #CE82FF;
+
+    --radius: 0.75rem;
+
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #4B4B4B;
+    --sidebar-primary: var(--grass);
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #EAF7DC;
+    --sidebar-accent-foreground: #2F6100;
+    --sidebar-border: #E5E5E5;
+    --sidebar-ring: var(--grass-bright);
+}
+
+.dark {
+    --grass-bright: #6FE015;
+    --grass: #58A700;
+    --grass-edge: #3B7000;
+
+    --sky-bright: #3CBDFF;
+    --sky: #1489C1;
+    --sky-edge: #0B6590;
+
+    --streak-bright: #FFA82B;
+    --streak: #C96D00;
+    --streak-edge: #8A4900;
+
+    --danger-bright: #FF6B6B;
+    --danger: #E14A4A;
+    --danger-edge: #A62B2B;
+
+    --background: #141F18;
+    --foreground: #EDEDED;
+    --card: #1C2A21;
+    --card-foreground: #EDEDED;
+    --popover: #1C2A21;
+    --popover-foreground: #EDEDED;
+
+    --primary: var(--grass);
+    --primary-foreground: #0B1410;
+    --secondary: #263A2D;
+    --secondary-foreground: #EDEDED;
+    --muted: #263A2D;
+    --muted-foreground: #A9B8AE;
+    --accent: #23381F;
+    --accent-foreground: #C8F0A0;
+    --destructive: var(--danger);
+
+    --border: oklch(1 0 0 / 12%);
+    --input: oklch(1 0 0 / 16%);
+    --ring: var(--grass-bright);
+
+    --chart-1: var(--grass-bright);
+    --chart-2: var(--sky);
+    --chart-3: var(--streak);
+    --chart-4: var(--danger);
+    --chart-5: #CE82FF;
+
+    --sidebar: #1C2A21;
+    --sidebar-foreground: #EDEDED;
+    --sidebar-primary: var(--grass);
+    --sidebar-primary-foreground: #0B1410;
+    --sidebar-accent: #23381F;
+    --sidebar-accent-foreground: #C8F0A0;
+    --sidebar-border: oklch(1 0 0 / 12%);
+    --sidebar-ring: var(--grass-bright);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+
+  /* Headings carry the extra weight that makes the UI feel chunky. */
+  h1, h2, h3 {
+    @apply font-extrabold tracking-tight;
+    }
+}
+
+@layer components {
+  /*
+   * The "3D" press. Rendered as a box-shadow rather than a real bottom
+   * border so that shrinking it on :active moves the label without
+   * reflowing anything around the button.
+   */
+  .btn-3d {
+    box-shadow: 0 4px 0 0 var(--btn-edge);
+    transition: box-shadow 80ms ease-out, transform 80ms ease-out;
+    }
+  /* Hover lifts the button rather than lightening the fill, so the
+   * measured label contrast holds in every state. */
+  .btn-3d:hover:not(:disabled) {
+    box-shadow: 0 5px 0 0 var(--btn-edge);
+    transform: translateY(-1px);
+    }
+  .btn-3d:active:not(:disabled) {
+    box-shadow: 0 1px 0 0 var(--btn-edge);
+    transform: translateY(3px);
+    }
+  .btn-3d:disabled {
+    box-shadow: 0 4px 0 0 color-mix(in oklch, var(--btn-edge), transparent 40%);
+    }
+}
+
+/* Delight, but only for people who want motion. */
+@keyframes habit-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+@keyframes habit-spark {
+  0% { opacity: 1; transform: translate(0, 0) scale(0.4); }
+  100% { opacity: 0; transform: translate(var(--spark-x), var(--spark-y)) scale(1); }
+}
+
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1) rotate(-2deg); }
+  50% { transform: scale(1.08) rotate(2deg); }
+}
+
+.animate-habit-pop { animation: habit-pop 420ms ease-out; }
+.animate-habit-spark { animation: habit-spark 560ms ease-out forwards; }
+.animate-flame-flicker { animation: flame-flicker 1.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  .btn-3d:active:not(:disabled) {
+    transform: none;
   }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-}
-
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
-}
-
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
 }
