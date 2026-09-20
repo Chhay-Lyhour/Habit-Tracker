@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Environment — real keys never get committed, the template does
+.env
+.env.*
+!.env.example
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
