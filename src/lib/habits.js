@@ -33,10 +33,10 @@ import { supabase } from '@/lib/supabase'
  *     That is the whole lesson: RLS stops other people touching your rows. It
  *     does nothing about you touching too many of your own.
  *
- *     Because of that, the three destructive functions call handWriteGuard()
- *     and throw instead of running. Write the filter, delete the guard line,
- *     and they work. The guard exists so an unfinished file cannot wipe your
- *     data on the first click.
+ *     ⚠ These functions run exactly as written. Until the filters are in,
+ *     deleting one habit deletes all of them, and unticking one day clears
+ *     every log you have. Fill the markers before using the app for anything
+ *     you would mind losing.
  * ============================================================================
  */
 
@@ -73,8 +73,6 @@ export function isoDaysAgo(days) {
  * it means RLS refused the statement, not that the app is broken.
  */
 export function friendlyDataError(error) {
-  if (error?.message?.includes('HAND-WRITE')) return error.message
-
   switch (error?.code) {
     case '42501':
       return 'The database refused that. Your RLS policies are not allowing it — check supabase/policies.sql.'
@@ -89,14 +87,6 @@ export function friendlyDataError(error) {
     default:
       return error?.message || 'Something went wrong. Try again.'
   }
-}
-
-function handWriteGuard(fnName, filter) {
-  throw new Error(
-    `${fnName}() still has its HAND-WRITE marker. It needs ${filter}. ` +
-      'Add the filter in src/lib/habits.js, then delete the handWriteGuard line ' +
-      'above it. Running without the filter would affect every row you own.'
-  )
 }
 
 // ---------------------------------------------------------------------------
@@ -161,8 +151,6 @@ export async function createHabit({ title, description }) {
 }
 
 export async function updateHabit(habitId, patch) {
-  handWriteGuard('updateHabit', ".eq('id', habitId)")
-
   const { data, error } = await supabase
     .from('habits')
     .update(patch)
@@ -177,8 +165,6 @@ export async function updateHabit(habitId, patch) {
 }
 
 export async function deleteHabit(habitId) {
-  handWriteGuard('deleteHabit', ".eq('id', habitId)")
-
   const { error } = await supabase
     .from('habits')
     .delete()
@@ -217,8 +203,6 @@ export async function logHabitToday(habitId, date = todayISO()) {
 
 /** Untick a habit: remove the day's row rather than flipping completed. */
 export async function unlogHabitToday(habitId, date = todayISO()) {
-  handWriteGuard('unlogHabitToday', ".eq('habit_id', habitId) and .eq('log_date', date)")
-
   const { error } = await supabase
     .from('daily_logs')
     .delete()
