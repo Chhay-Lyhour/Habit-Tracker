@@ -1,10 +1,3 @@
-/* eslint-disable no-unused-vars -- see HAND-WRITE note below */
-
-// userId, habitId and date are reported unused only because the HAND-WRITE
-// filters below are not written yet; each one is the argument its filter
-// needs. Once every marker is filled in, delete the disable line above — if
-// anything is still reported unused then, you have missed a filter.
-
 import { supabase } from '@/lib/supabase'
 
 /**
@@ -12,10 +5,8 @@ import { supabase } from '@/lib/supabase'
  * All habit data access lives here. Nothing else in the app talks to the
  * habits or daily_logs tables.
  *
- * HAND-WRITE ZONE — every query below is complete except its filter. Each
- * `// HAND-WRITE:` comment names what the filter has to target. Fill them in.
- *
- * Why this is worth doing carefully, and it differs per operation:
+ * Every query below is scoped by an explicit filter. What that filter is
+ * protecting against differs per operation:
  *
  *   READS (listHabits, listLogsSince)
  *     A missing filter is not dangerous. RLS already scopes SELECT to rows
@@ -32,11 +23,6 @@ import { supabase } from '@/lib/supabase'
  *
  *     That is the whole lesson: RLS stops other people touching your rows. It
  *     does nothing about you touching too many of your own.
- *
- *     ⚠ These functions run exactly as written. Until the filters are in,
- *     deleting one habit deletes all of them, and unticking one day clears
- *     every log you have. Fill the markers before using the app for anything
- *     you would mind losing.
  * ============================================================================
  */
 
@@ -97,7 +83,7 @@ export async function listHabits(userId) {
   const { data, error } = await supabase
     .from('habits')
     .select(HABIT_FIELDS)
-    // HAND-WRITE: .eq('user_id', userId)
+    .eq('user_id', userId)
     // Scope the read to the signed-in user. RLS would do this anyway, so a
     // missing filter here is harmless — but a query should state its own
     // intent rather than depend on the database to enforce it.
@@ -115,7 +101,7 @@ export async function listLogsSince(userId, sinceDate) {
   const { data, error } = await supabase
     .from('daily_logs')
     .select(LOG_FIELDS)
-    // HAND-WRITE: .eq('user_id', userId)
+    .eq('user_id', userId)
     // Same reasoning as listHabits — defence in depth, not the real guard.
     .gte('log_date', sinceDate)
     .order('log_date', { ascending: false })
@@ -154,7 +140,7 @@ export async function updateHabit(habitId, patch) {
   const { data, error } = await supabase
     .from('habits')
     .update(patch)
-    // HAND-WRITE: .eq('id', habitId)
+    .eq('id', habitId)
     // Must target this one habit's id. Without it every habit you own is
     // rewritten with the same patch, and RLS allows it — they are all yours.
     .select(HABIT_FIELDS)
@@ -168,9 +154,9 @@ export async function deleteHabit(habitId) {
   const { error } = await supabase
     .from('habits')
     .delete()
-    // HAND-WRITE: .eq('id', habitId)
-    // The most destructive filter in the file. Missing, this empties your
-    // habits table — and cascades every daily_log with it.
+    .eq('id', habitId)
+  // The most destructive filter in the file. Missing, this empties your
+  // habits table — and cascades every daily_log with it.
 
   if (error) throw error
 }
@@ -206,11 +192,11 @@ export async function unlogHabitToday(habitId, date = todayISO()) {
   const { error } = await supabase
     .from('daily_logs')
     .delete()
-    // HAND-WRITE: .eq('habit_id', habitId)
-    // HAND-WRITE: .eq('log_date', date)
-    // Two filters, and both matter. With only habit_id you erase that habit's
-    // entire history instead of one day. With only log_date you erase that day
-    // across every habit you own. With neither, every log you have.
+    .eq('habit_id', habitId)
+    .eq('log_date', date)
+  // Two filters, and both matter. With only habit_id you erase that habit's
+  // entire history instead of one day. With only log_date you erase that day
+  // across every habit you own. With neither, every log you have.
 
   if (error) throw error
 }
