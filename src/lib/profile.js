@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars -- `userId` in getProfile IS the missing filter. Delete this line once every HAND-WRITE marker is filled. */
 import { supabase } from '@/lib/supabase'
 
 /**

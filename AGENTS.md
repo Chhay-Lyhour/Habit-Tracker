@@ -268,21 +268,13 @@ renders `ErrorState`) — which is what every handler in `TrackerPage` and
 `AvatarUploader` already does. Do not remove those on the theory that a
 boundary covers them.
 
-### CrashTest (dev only — remove before submitting)
+### CrashTest (removed)
 
-[`src/components/app/CrashTest.jsx`](src/components/app/CrashTest.jsx) throws
-during render when the URL has `?crash=<section>`: `nav`, `avatar`, `stats` or
-`habits`. Guarded by `import.meta.env.DEV`, so it is compiled out of
-production builds. Try again disarms it until the next reload.
-
-Every use is marked `CRASHTEST` — `grep -rn CRASHTEST src` lists them:
-
-| File | What |
-| --- | --- |
-| `src/components/app/CrashTest.jsx` | The component — delete the file |
-| `src/components/app/AppShell.jsx` | import + `<CrashTest section="nav" />` |
-| `src/pages/TrackerPage.jsx` | import + three `<CrashTest />` (avatar, stats, habits) |
-| `src/components/app/SectionFallback.jsx` | import + `disarmCrashTest()` in `handleRetry` |
+A dev-only `<CrashTest />` that threw during render on `?crash=<section>` was
+used to screenshot the boundaries, then removed. To test a boundary again,
+temporarily render a child that throws inside it — the throw must happen
+during render; one in an event handler or after an `await` will not reach the
+boundary.
 
 ## Hand-write zones
 
@@ -398,6 +390,6 @@ Run before submitting.
       `storage.foldername` check; user B cannot write into user A's folder
 - [ ] Four policies on `profiles`; both `.eq('id', …)` filters written and the
       `eslint-disable` line in `profile.js` removed
-- [ ] `?crash=habits` / `stats` / `nav` / `avatar` crashes only that section;
-      Try again recovers it
-- [ ] **CrashTest removed**: `grep -rn CRASHTEST src` → no hits
+- [ ] A render error in one section shows only that section's fallback;
+      Try again recovers it (screenshot taken with the now-removed CrashTest)
+- [ ] **CrashTest removed**: `grep -rni crashtest src` → no hits

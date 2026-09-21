@@ -1,7 +1,6 @@
 import { RotateCw } from 'lucide-react'
 
 import { cn } from 'cn'
-import { disarmCrashTest } from '@/components/app/CrashTest' // CRASHTEST
 import { Button } from '@/components/ui/button'
 
 /**
@@ -30,11 +29,6 @@ export function SectionFallback({
   compact = false,
   className,
 }) {
-  function handleRetry() {
-    disarmCrashTest() // CRASHTEST
-    onRetry?.()
-  }
-
   if (compact) {
     return (
       <div
@@ -48,7 +42,7 @@ export function SectionFallback({
           {label ? `${label} took a tumble.` : title}
         </span>
         {onRetry ? (
-          <Button variant="quiet" size="sm" onClick={handleRetry}>
+          <Button variant="quiet" size="sm" onClick={onRetry}>
             <RotateCw aria-hidden="true" />
             Try again
           </Button>
@@ -86,7 +80,7 @@ export function SectionFallback({
       </div>
 
       {onRetry ? (
-        <Button variant="quiet" size="touch" onClick={handleRetry}>
+        <Button variant="quiet" size="touch" onClick={onRetry}>
           <RotateCw aria-hidden="true" />
           Try again
         </Button>

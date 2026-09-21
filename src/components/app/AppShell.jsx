@@ -1,7 +1,6 @@
 import { Flame } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
-import { CrashTest } from '@/components/app/CrashTest' // CRASHTEST
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 import { SectionFallback } from '@/components/app/SectionFallback'
 
@@ -25,8 +24,6 @@ export function AppShell({ actions, children }) {
               <SectionFallback compact label="The menu" onRetry={reset} />
             )}
           >
-            {/* CRASHTEST */}
-            <CrashTest section="nav" />
             <Link
               to="/"
               className="flex items-center gap-2 rounded-control outline-none focus-visible:ring-3 focus-visible:ring-ring/60"

@@ -4,7 +4,6 @@ import { toast } from 'sonner'
 
 import { AppShell } from '@/components/app/AppShell'
 import { AvatarUploader } from '@/components/app/AvatarUploader'
-import { CrashTest } from '@/components/app/CrashTest' // CRASHTEST
 import { DeleteHabitDialog } from '@/components/app/DeleteHabitDialog'
 import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
@@ -183,8 +182,6 @@ export function TrackerPage() {
             />
           )}
         >
-          {/* CRASHTEST */}
-          <CrashTest section="avatar" />
           <AvatarUploader />
         </ErrorBoundary>
       </section>
@@ -197,8 +194,6 @@ export function TrackerPage() {
             <SectionFallback label="Your stats" emoji="📊" onRetry={reset} />
           )}
         >
-          {/* CRASHTEST */}
-          <CrashTest section="stats" />
           <StatsSection
             status={status}
             habits={habits}
@@ -216,8 +211,6 @@ export function TrackerPage() {
             <SectionFallback label="Your habits" emoji="🌱" onRetry={reset} />
           )}
         >
-          {/* CRASHTEST */}
-          <CrashTest section="habits" />
           {renderBody()}
         </ErrorBoundary>
       </section>
