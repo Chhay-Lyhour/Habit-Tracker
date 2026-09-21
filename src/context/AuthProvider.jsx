@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { clearRuntimeCaches } from '@/lib/pwa'
 import { supabase } from '@/lib/supabase'
 import { AuthContext } from '@/context/auth-context'
 
@@ -42,9 +43,13 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
       setLoading(false)
+
+      // Also covers signing out in another tab, or the session ending on its
+      // own — not only our signOut() below.
+      if (event === 'SIGNED_OUT') clearRuntimeCaches()
     })
 
     return () => {
@@ -77,6 +82,11 @@ export function AuthProvider({ children }) {
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     if (error) throw error
+
+    // Service-worker caches are keyed by URL, not by user, and outlive the
+    // session. Clear them before the next person gets the device. Awaited so
+    // it is done before /login renders; never throws.
+    await clearRuntimeCaches()
   }, [])
 
   const value = useMemo(

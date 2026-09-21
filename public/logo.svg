@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Habit Tracker mark: a flame on a grass-green tile. Original drawing;
+       every PWA icon is generated from this file (npm run generate-pwa-assets). -->
+  <rect width="512" height="512" rx="112" fill="#58CC02"/>
+  <path fill="#FFFFFF" d="M256 72C270 150 384 196 384 318C384 392 326 444 256 444C186 444 128 392 128 318C128 262 158 222 188 190C192 226 208 250 232 262C222 196 232 128 256 72Z"/>
+  <path fill="#FF9600" d="M256 262C270 300 312 322 312 366C312 398 288 418 256 418C224 418 200 398 200 366C200 336 220 318 234 294C242 308 250 300 256 262Z"/>
+</svg>
