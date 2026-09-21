@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 import { SectionFallback } from '@/components/app/SectionFallback'
+import { UpdateToast } from '@/components/app/UpdateToast'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthProvider'
 import { ProfileProvider } from '@/context/ProfileProvider'
@@ -61,6 +62,9 @@ export default function App() {
         </ErrorBoundary>
 
         <Toaster position="top-center" richColors />
+        {/* Outside every ErrorBoundary: a crashed section must not stop the
+            user from picking up the update that fixes it. */}
+        <UpdateToast />
       </AuthProvider>
     </BrowserRouter>
   )
