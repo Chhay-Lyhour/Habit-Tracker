@@ -60,3 +60,27 @@ create policy "logs: delete own"
   on daily_logs for delete
   to authenticated
   using ( (select auth.uid()) = user_id );
+
+-- ============ PROFILES ============
+-- (RLS is already enabled in schema_v2.sql)
+
+create policy "profiles: select own"
+  on profiles for select
+  to authenticated
+  using ( (select auth.uid()) = id );
+
+create policy "profiles: insert own"
+  on profiles for insert
+  to authenticated
+  with check ( (select auth.uid()) = id );
+
+create policy "profiles: update own"
+  on profiles for update
+  to authenticated
+  using ( (select auth.uid()) = id )
+  with check ( (select auth.uid()) = id );
+
+create policy "profiles: delete own"
+  on profiles for delete
+  to authenticated
+  using ( (select auth.uid()) = id );
