@@ -3,13 +3,18 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { AppShell } from '@/components/app/AppShell'
+import { AvatarUploader } from '@/components/app/AvatarUploader'
+import { CrashTest } from '@/components/app/CrashTest' // CRASHTEST
 import { DeleteHabitDialog } from '@/components/app/DeleteHabitDialog'
 import { EmptyState } from '@/components/app/EmptyState'
+import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 import { ErrorState } from '@/components/app/ErrorState'
 import { HabitCard } from '@/components/app/HabitCard'
 import { HabitFormDialog } from '@/components/app/HabitFormDialog'
 import { HabitListSkeleton } from '@/components/app/HabitListSkeleton'
 import { PageHeader } from '@/components/app/PageHeader'
+import { SectionFallback } from '@/components/app/SectionFallback'
+import { StatsSection } from '@/components/app/StatsSection'
 import { UserMenu } from '@/components/app/UserMenu'
 import { Button } from '@/components/ui/button'
 import { useHabits } from '@/hooks/useHabits'
@@ -160,7 +165,62 @@ export function TrackerPage() {
         }
       />
 
-      {renderBody()}
+      {/*
+        One boundary per section, so a render crash in one leaves the others
+        working. Boundaries only catch errors thrown while rendering — the
+        async handlers above still need their own try/catch + toast.
+        resetKeys: a successful refetch hands the section fresh data, so an
+        errored section gets another go without a click.
+      */}
+      <section aria-label="Your profile" className="mb-8">
+        <ErrorBoundary
+          name="avatar"
+          fallback={({ reset }) => (
+            <SectionFallback
+              label="Your profile"
+              emoji="🖼️"
+              onRetry={reset}
+            />
+          )}
+        >
+          {/* CRASHTEST */}
+          <CrashTest section="avatar" />
+          <AvatarUploader />
+        </ErrorBoundary>
+      </section>
+
+      <section aria-label="Your stats" className="mb-8">
+        <ErrorBoundary
+          name="stats"
+          resetKeys={[habits, doneToday]}
+          fallback={({ reset }) => (
+            <SectionFallback label="Your stats" emoji="📊" onRetry={reset} />
+          )}
+        >
+          {/* CRASHTEST */}
+          <CrashTest section="stats" />
+          <StatsSection
+            status={status}
+            habits={habits}
+            doneToday={doneToday}
+            streaks={streaks}
+          />
+        </ErrorBoundary>
+      </section>
+
+      <section aria-label="Your habits">
+        <ErrorBoundary
+          name="habits"
+          resetKeys={[habits]}
+          fallback={({ reset }) => (
+            <SectionFallback label="Your habits" emoji="🌱" onRetry={reset} />
+          )}
+        >
+          {/* CRASHTEST */}
+          <CrashTest section="habits" />
+          {renderBody()}
+        </ErrorBoundary>
+      </section>
 
       <HabitFormDialog
         open={formOpen}

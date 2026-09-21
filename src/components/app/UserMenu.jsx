@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { LogOut, UserRound } from 'lucide-react'
+import { LogOut } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { UserAvatar } from '@/components/app/UserAvatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfile } from '@/hooks/useProfile'
 import { friendlyAuthError } from '@/lib/validation'
 
 /**
@@ -21,6 +23,7 @@ import { friendlyAuthError } from '@/lib/validation'
  */
 export function UserMenu() {
   const { user, signOut } = useAuth()
+  const { profile, status } = useProfile()
   const [pending, setPending] = useState(false)
 
   async function handleSignOut() {
@@ -38,8 +41,19 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="quiet" size="touch-icon" aria-label="Account menu">
-          <UserRound aria-hidden="true" />
+        <Button
+          variant="quiet"
+          size="touch-icon"
+          aria-label="Account menu"
+          className="p-0"
+        >
+          <UserAvatar
+            src={profile?.avatar_url}
+            email={user?.email}
+            loading={status === 'loading'}
+            className="size-10"
+            fallbackClassName="text-sm"
+          />
         </Button>
       </DropdownMenuTrigger>
 

@@ -87,7 +87,7 @@ export async function getProfile() {
   const { data, error } = await supabase
     .from('profiles')
     .select(PROFILE_FIELDS)
-    // HAND-WRITE: .eq('id', userId)
+    .eq('id', userId)
     // Scope the read to your own row. RLS already limits SELECT to it, so
     // missing this is harmless — but the query should say what it means.
     .maybeSingle()
@@ -137,7 +137,7 @@ export async function uploadAvatar(file) {
   const { data, error } = await supabase
     .from('profiles')
     .update({ avatar_url: avatarUrl, updated_at: new Date().toISOString() })
-    // HAND-WRITE: .eq('id', userId)
+    .eq('id', userId)
     // Must target your own row. RLS limits it to your row too, but an
     // unfiltered UPDATE is refused outright by Supabase (code 21000), and the
     // query should state its target rather than lean on either.
