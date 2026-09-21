@@ -21,6 +21,8 @@ missing.
 | Font | Nunito, self-hosted via `@fontsource/nunito` (no CDN) |
 | Icons | lucide-react |
 | Toasts | sonner |
+| PWA | vite-plugin-pwa (Workbox), `registerType: 'prompt'`; icons via `@vite-pwa/assets-generator` |
+| Hosting | Vercel (`vercel.json`) |
 | Lint | ESLint 10, flat config |
 
 ## Running it
@@ -33,11 +35,12 @@ npm run dev
 
 | Script | Does |
 | --- | --- |
-| `npm run dev` | Dev server |
-| `npm run build` | Production build |
-| `npm run preview` | Serve the build |
+| `npm run dev` | Dev server — **no service worker** |
+| `npm run build` | Production build, incl. `sw.js` + manifest |
+| `npm run preview` | Serve the build — **the only place to test PWA/offline** |
 | `npm run lint` | ESLint — must exit 0 |
 | `npm run check:supabase` | Env, key role, connectivity and table checks |
+| `npm run generate-pwa-assets` | Regenerate all icons from `public/logo.svg` |
 
 Vite reads `.env` only at startup. Restart after editing it.
 
@@ -64,13 +67,17 @@ src/
     app/       Our own components. Everything reusable lives here.
   context/     auth-context.js + AuthProvider.jsx,
                profile-context.js + ProfileProvider.jsx
-  hooks/       useAuth, useHabits, useProfile
+  hooks/       useAuth, useHabits, useProfile, useOnlineStatus
   lib/         supabase.js, habits.js, streaks.js, validation.js, utils.js,
-               profile.js, validateAvatar.js
+               profile.js, validateAvatar.js, offlineQueue.js, pwa.js
   pages/       LoginPage, SignupPage, TrackerPage, NotFoundPage
   routes/      ProtectedRoute, PublicOnlyRoute
+  pwa.d.ts     Editor-only types for virtual:pwa-register/react
+public/        logo.svg (icon source) + generated icons — see V3
 supabase/      schema.sql, policies.sql, seed.sql, schema_v2.sql, storage.sql
 scripts/       check-supabase.js
+vite.config.js PWA config, incl. runtimeCaching (hand-write zone 6)
+pwa-assets.config.js, vercel.json
 ```
 
 Import with the `@/` alias, declared in both `jsconfig.json` and
@@ -276,6 +283,125 @@ temporarily render a child that throws inside it — the throw must happen
 during render; one in an event handler or after an `await` will not reach the
 boundary.
 
+## V3: PWA, offline, mobile
+
+### PWA config
+
+All in [`vite.config.js`](vite.config.js) (`VitePWA({...})`).
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `registerType` | `'prompt'` | A new build waits for the user's Refresh — never reloads under someone typing. **Not** `autoUpdate`. |
+| `injectRegister` | `false` | `UpdateToast` registers the worker; no second script |
+| `devOptions.enabled` | `false` | A dev-server worker serves stale HMR modules |
+| Manifest | name, `short_name: 'Habits'`, `theme_color #58CC02`, `background_color #F7F7F7`, `standalone`, `start_url`/`scope` `/` | Colours are the `--grass-bright` / `--background` tokens |
+| Icons | 64, 192, 512, maskable 512 | Generated — see below |
+| Precache | `**/*.{js,css,html,ico,png,svg}` + latin Nunito `woff2` only | The app shell. Other font subsets are runtime-cached (rule 4) |
+| `navigateFallback` | `index.html` | Deep links open offline |
+| `runtimeCaching` | **hand-write zone 6** | See [Hand-write zones](#hand-write-zones) |
+
+**Icons.** Source is [`public/logo.svg`](public/logo.svg) — an original flame
+mark, no third-party assets. `npm run generate-pwa-assets` (config in
+`pwa-assets.config.js`) writes `pwa-64/192/512x512.png`,
+`maskable-icon-512x512.png`, `apple-touch-icon-180x180.png` and `favicon.ico`
+into `public/`. Re-run after editing the SVG; commit the outputs.
+`index.html` links the favicon, apple-touch-icon, `theme-color` and sets
+`viewport-fit=cover`.
+
+**UpdateToast** — [`src/components/app/UpdateToast.jsx`](src/components/app/UpdateToast.jsx).
+The import is exactly `import { useRegisterSW } from 'virtual:pwa-register/react'`
+(`src/pwa.d.ts` is editor-only typing). "New version available" (Refresh →
+`updateServiceWorker(true)`, or Not now) and a one-time "Ready to work
+offline", both through sonner's `aria-live="polite"` region. Checks for a new
+build hourly while online. Mounted once in `App.jsx`, **outside every
+ErrorBoundary**. Under `npm run dev` the hook is a no-op stub.
+
+### Sign-out clears runtime caches
+
+A service-worker cache is keyed by URL, not by user, and outlives the session.
+[`clearRuntimeCaches()`](src/lib/pwa.js) deletes every cache **except**
+`workbox-precache-*` (so the app still opens offline for the next person) —
+by "not the precache", so it works whatever names zone 6 picks. It runs:
+
+- awaited in `AuthProvider.signOut()`, before `/login` renders;
+- on every `SIGNED_OUT` event — signing out in another tab, or the session
+  ending on its own.
+
+It cannot help a tab closed without signing out. That is why zone 6 has to
+weigh caching `/rest/v1` at all.
+
+### Offline queue (habit creation only)
+
+[`src/lib/offlineQueue.js`](src/lib/offlineQueue.js), used by `useHabits`.
+
+- **When it queues** — `create()` queues if `navigator.onLine` is false, **and**
+  if the insert fails with a network error (`isNetworkError`): `onLine === true`
+  does not prove a connection.
+- **Storage** — `localStorage['habit-tracker:queue:<userId>']`. Per user.
+- **Idempotency** — each item gets `crypto.randomUUID()` up front, sent as the
+  habit's primary key. A replay hits `23505` and counts as synced. Online
+  creates send the same id they would queue with, so a request whose response
+  was lost cannot duplicate either. No schema change needed.
+- **Sync** — on the `online` event and on start-up. One run at a time
+  (module-level promise), one item at a time, oldest first. Re-checks the live
+  session user before every insert and stops if it changed. Removes an item
+  only after its insert succeeds; a network error stops the run; any other
+  error keeps the item with `lastError` (Retry / Discard on the card). Then
+  refetches. Toasts: "Saved offline, will sync when you're back online" and
+  "Back online. Synced N habits."
+- **Never** sends `user_id` — column default + INSERT policy apply as normal.
+- **Sign-out** clears the queue (`AuthProvider.signOut`). `UserMenu` asks first
+  if anything is unsynced.
+- **Everything else** (tick, edit, delete, avatar save) is disabled while
+  `useOnlineStatus()` is false; if the browser lies, `friendlyDataError` shows
+  "You're offline".
+
+Queued items render as [`QueuedHabitCard`](src/components/app/QueuedHabitCard.jsx):
+clock icon, dashed, muted, "Queued", no controls. They are not counted in
+stats.
+
+### Responsive rules
+
+- Test at **320** (iPhone SE), **393** (Pixel 5), **768** (tablet): no
+  horizontal scroll — `document.documentElement.scrollWidth > innerWidth`
+  must be `false`. Fix causes, never `overflow-x: hidden` on the page.
+- Flex children that hold text get `min-w-0` + `truncate`.
+- Card grids start at `grid-cols-1` and widen at `sm:`. (Stats: `sm:grid-cols-3`
+  — three tiles in two columns strands one.)
+- `overflow-x-auto` only inside tables or code blocks.
+- 48px tap targets: `size="touch"` / `"touch-icon"`, `h-12` inputs, and
+  `min-h-12` on `DropdownMenuItem` (the generated ones are ~28px).
+- Inputs are `text-base` (16px) — smaller and iOS zooms on focus.
+- Safe areas: `safe-x`, `safe-top`, `safe-bottom` utilities in `index.css`
+  (`max(1rem, env(safe-area-inset-*))`). Header, main and `AuthCard` use them.
+- Alert dialogs: `max-sm:max-w-[calc(100%-2rem)]!` — the generated `max-w-xs`
+  is exactly 320px.
+
+**Share** — [`ShareButton`](src/components/app/ShareButton.jsx) in the header.
+`navigator.share` → clipboard + "Link copied!" → select-and-copy dialog.
+Shares only `location.origin + '/'` and fixed copy — never the current URL,
+habit data, email or tokens. `AbortError` (user closed the sheet) is silent.
+
+### Deploy (Vercel)
+
+[`vercel.json`](vercel.json): SPA rewrite to `/index.html` (real files win);
+`sw.js`, `manifest.webmanifest` and `index.html` `max-age=0,
+must-revalidate`; `/assets/*` immutable for a year (content-hashed); manifest
+`Content-Type: application/manifest+json`; `nosniff`, `Referrer-Policy`,
+`X-Frame-Options`.
+
+Host env vars: `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` — nothing
+else. After deploying, add the URL to Supabase **Authentication > URL
+Configuration** (Site URL + `https://<app>.vercel.app/**` redirect).
+
+### Testing PWA behaviour
+
+- **Always** `npm run build && npm run preview`. **Never** `npm run dev`.
+- Lighthouse: incognito, production build.
+- Offline: DevTools > Application > Service Workers > **Offline**.
+- Update toast: old version open → visible change → `npm run build` → reload
+  the tab **twice**.
+
 ## Hand-write zones
 
 **Do not write these. They are graded.** If you are an agent and asked to
@@ -333,6 +459,30 @@ Wiring it into sections is not part of the zone.
 
 `supabase/storage.sql` is **not** a hand-write zone — it was generated and is
 there to be audited.
+
+### 6. Runtime caching — `runtimeCaching` in `vite.config.js`
+
+The array only; the comment block above it lists the decisions. For each of
+images/avatars, `/rest/v1`, `/auth/v1`, and fonts/other static assets: the
+strategy, cache name, expiration, and offline behaviour. The rest of the PWA
+config is not part of the zone.
+
+### 7. Online status + offline banner
+
+- `src/hooks/useOnlineStatus.js` — `useOnlineStatus() → boolean`. Used by the
+  banner, `TrackerPage` and `AvatarUploader`.
+- `src/components/app/OfflineBanner.jsx` — mounted in `AppShell`, inside the
+  sticky header, in its own boundary.
+
+The offline **queue** is not part of this zone.
+
+### 8. Caching sentences — `README.md`
+
+One sentence per caching rule under **Caching decisions**, explaining why that
+asset earns its strategy.
+
+`vercel.json`, the manifest, icons, `UpdateToast`, the offline queue and the
+share button are **not** hand-write zones.
 
 ## Security rules
 
@@ -393,3 +543,26 @@ Run before submitting.
 - [ ] A render error in one section shows only that section's fallback;
       Try again recovers it (screenshot taken with the now-removed CrashTest)
 - [ ] **CrashTest removed**: `grep -rni crashtest src` → no hits
+
+### V3
+
+Run on `npm run build && npm run preview` (or the deployed URL), incognito.
+
+- [ ] Manifest valid, icons 192 / 512 / maskable present; the app installs
+- [ ] Service worker registers on the preview build only — not under `npm run dev`
+- [ ] Offline reload opens the app shell; the offline banner shows
+- [ ] New build + reload twice → "New version available"; Refresh applies it
+- [ ] `grep -rn "virtual:pwa-register/react" src` shows the exact import
+- [ ] A habit added offline shows as Queued, syncs **once** on reconnect,
+      exactly one row in the Table Editor
+- [ ] Sign out with a queued habit → confirm dialog; after sign-out another
+      account never sees or syncs it
+- [ ] Sign out → Cache Storage holds only `workbox-precache-*`
+- [ ] No `/auth/v1` response in Cache Storage, ever
+- [ ] Bundle holds no secret beyond the anon key:
+      `grep -rl "service_role" dist/` → no hits
+- [ ] No horizontal scroll at 320, 393 and 768px
+- [ ] Share: native sheet on a phone; "Link copied!" on desktop
+- [ ] Lighthouse Accessibility ≥ 95; README table filled in
+- [ ] Zones 6–8 written: `runtimeCaching`, `useOnlineStatus` +
+      `OfflineBanner`, README caching sentences
