@@ -45,14 +45,18 @@ export function StatsSection({ status, habits, doneToday, streaks }) {
   }
 
   return (
+    // One column on phones: three tiles squeezed into 288px left ~88px each,
+    // too narrow for "Best streak" at a readable size. sm:grid-cols-3 rather
+    // than sm:grid-cols-2 lg:grid-cols-3 — with exactly three tiles, two
+    // columns would strand the third on a row of its own.
     <ul
-      className="grid grid-cols-3 gap-3 sm:gap-4"
+      className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4"
       aria-busy={status === 'loading' || undefined}
     >
       {TILES.map(({ key, label, icon: Icon, tone, iconTone }) => (
-        <li key={key}>
+        <li key={key} className="min-w-0">
           <Card className="h-full">
-            <CardContent className="flex flex-col items-center gap-2 px-2 text-center sm:flex-row sm:gap-3 sm:px-4 sm:text-left">
+            <CardContent className="flex min-w-0 items-center gap-3">
               <span
                 className={cn(
                   'grid size-10 shrink-0 place-items-center rounded-full',
@@ -63,13 +67,13 @@ export function StatsSection({ status, habits, doneToday, streaks }) {
               </span>
               <div className="min-w-0">
                 {status === 'loading' ? (
-                  <Skeleton className="mx-auto h-7 w-10 sm:mx-0" />
+                  <Skeleton className="h-7 w-10" />
                 ) : (
                   <p className="font-heading text-2xl font-extrabold tabular-nums">
                     {values[key]}
                   </p>
                 )}
-                <p className="text-xs font-bold text-muted-foreground sm:text-sm">
+                <p className="truncate text-sm font-bold text-muted-foreground">
                   {label}
                 </p>
               </div>

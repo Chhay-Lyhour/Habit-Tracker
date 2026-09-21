@@ -53,12 +53,37 @@ export function isoDaysAgo(days) {
 }
 
 /**
+ * True when a request never got an HTTP response: fetch rejected with a
+ * TypeError. Each browser words it differently — Chrome "Failed to fetch",
+ * Firefox "NetworkError when attempting to fetch resource", Safari "Load
+ * failed". supabase-js sometimes wraps it, so check the message too.
+ */
+export function isNetworkError(error) {
+  if (!error) return false
+  const message = String(error.message ?? '').toLowerCase()
+  // Not a bare `name === 'TypeError'` check: a real bug (undefined.trim())
+  // is a TypeError too, and must not be mistaken for "offline".
+  return (
+    error.name === 'AuthRetryableFetchError' ||
+    message.includes('failed to fetch') ||
+    message.includes('networkerror') ||
+    message.includes('load failed') ||
+    message.includes('network request failed')
+  )
+}
+
+/**
  * Turns Postgres error codes into something a person can act on.
  *
  * 42501 is the one you will meet most while the policies are being written —
  * it means RLS refused the statement, not that the app is broken.
  */
 export function friendlyDataError(error) {
+  // No response at all — offline, or "online" with no real connection.
+  if (isNetworkError(error)) {
+    return 'You’re offline. Try again when you’re back online.'
+  }
+
   switch (error?.code) {
     case '42501':
       return 'The database refused that. Your RLS policies are not allowing it — check supabase/policies.sql.'
@@ -121,11 +146,17 @@ export async function listLogsSince(userId, sinceDate) {
  * database stamps the owner from the request's JWT. A client that sent its own
  * user_id would be asserting who it is, which is exactly what your INSERT
  * policy's WITH CHECK refuses to take on trust.
+ *
+ * `id` is optional and only sent by the offline queue: each queued habit gets
+ * a client-generated uuid up front, so replaying the same item twice hits the
+ * primary key (23505) instead of creating a duplicate. It names the row, not
+ * the owner — user_id still comes from auth.uid().
  */
-export async function createHabit({ title, description }) {
+export async function createHabit({ id, title, description }) {
   const { data, error } = await supabase
     .from('habits')
     .insert({
+      ...(id ? { id } : {}),
       title: title.trim(),
       description: description?.trim() || null,
     })

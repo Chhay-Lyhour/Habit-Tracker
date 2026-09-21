@@ -240,6 +240,21 @@
 }
 
 /* Delight, but only for people who want motion. */
+/* Safe areas. index.html sets viewport-fit=cover, so on notched phones (and
+ * in the installed app) the page draws edge to edge. These keep content clear
+ * of the notch, rounded corners and home indicator; max() keeps the normal
+ * 1rem gutter wherever the inset is zero. */
+@utility safe-x {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: max(2rem, env(safe-area-inset-bottom));
+}
+
 @keyframes habit-pop {
   0% { transform: scale(1); }
   40% { transform: scale(1.18); }

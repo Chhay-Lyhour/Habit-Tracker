@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 /** Centred single-column frame shared by the login and signup screens. */
 export function AuthCard({ title, description, children, footer }) {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center bg-background px-4 py-10">
+    <div className="safe-x safe-bottom flex min-h-dvh flex-col items-center justify-center bg-background pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="w-full max-w-md">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <Flame className="size-12 text-streak-bright" aria-hidden="true" />
