@@ -1,3 +1,4 @@
+import * as Linking from 'expo-linking'
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 
 import { supabase } from '@/lib/supabase'
@@ -43,17 +44,21 @@ export function AuthProvider({ children }) {
       signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
       /**
        * The web signUp uses window.location.origin (audit leak 4). Native has
-       * no origin, so the confirmation link goes to the deployed web app's
-       * /login: the email gets confirmed there, then the user signs in here.
+       * no origin, so the confirmation link points back INTO the app:
+       * Linking.createURL gives `exp://<your-mac>:8081/--/auth-callback` in
+       * Expo Go and `habittracker://auth-callback` in a real build. Tapping
+       * the link on the phone opens src/app/auth-callback.jsx, which signs
+       * the user in. Both URLs must be allow-listed in Supabase (Redirect
+       * URLs), or Supabase falls back to the Site URL — the web app.
+       *
        * With confirmation on, there is a user but no session yet — the
        * caller shows "check your inbox", exactly like the web page.
        */
       signUp: async (email, password) => {
-        const appUrl = process.env.EXPO_PUBLIC_APP_URL
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: appUrl ? { emailRedirectTo: `${appUrl.replace(/\/$/, '')}/login` } : undefined,
+          options: { emailRedirectTo: Linking.createURL('auth-callback') },
         })
         return { error, needsEmailConfirmation: !error && data.session === null }
       },
