@@ -59,7 +59,7 @@ export default function SignupScreen() {
                 We sent a confirmation link to <Text className="font-extrabold">{sentTo}</Text>.
               </Text>
               <Text className="text-center text-sm text-muted-foreground">
-                Tap the link, then come back here and sign in.
+                Open the email on this phone and tap the link — it opens the app and signs you in.
               </Text>
               <Button label="Go to sign in" onPress={() => router.replace('/login')} />
             </>

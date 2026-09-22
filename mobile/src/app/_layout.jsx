@@ -84,6 +84,9 @@ function RootNavigator() {
       <Stack.Protected guard={!session}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
+        {/* The confirmation email's deep link. Once it sets the session this
+            group closes and the tracker opens. */}
+        <Stack.Screen name="auth-callback" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>
   )

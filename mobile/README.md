@@ -26,8 +26,16 @@ Fill in `.env` with the same project URL and anon key as the web app, under
 (same Wi-Fi), or press `a` / `i` for an emulator or simulator. Restart
 `expo start` after editing `.env`.
 
-Sign-up works in the app. With email confirmation on, the link opens the
-web app (`EXPO_PUBLIC_APP_URL`), then you sign in here.
+Sign-up works in the app. With email confirmation on, the email's link opens
+the app (`src/app/auth-callback.jsx`), which signs you in. For that, add these
+to Supabase **Authentication > URL Configuration > Redirect URLs**:
+
+- `exp://**` for Expo Go during development
+- `habittracker://**` for a real build (the `scheme` in `app.json`)
+
+Without them, Supabase falls back to the Site URL and the link opens the web
+app instead. Open the email **on the phone**: an `exp://` link does nothing
+on a laptop.
 
 ## Layout
 
