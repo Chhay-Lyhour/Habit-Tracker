@@ -41,6 +41,22 @@ export function AuthProvider({ children }) {
       user: session?.user ?? null,
       loading,
       signIn: (email, password) => supabase.auth.signInWithPassword({ email, password }),
+      /**
+       * The web signUp uses window.location.origin (audit leak 4). Native has
+       * no origin, so the confirmation link goes to the deployed web app's
+       * /login: the email gets confirmed there, then the user signs in here.
+       * With confirmation on, there is a user but no session yet — the
+       * caller shows "check your inbox", exactly like the web page.
+       */
+      signUp: async (email, password) => {
+        const appUrl = process.env.EXPO_PUBLIC_APP_URL
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: appUrl ? { emailRedirectTo: `${appUrl.replace(/\/$/, '')}/login` } : undefined,
+        })
+        return { error, needsEmailConfirmation: !error && data.session === null }
+      },
       signOut: () => supabase.auth.signOut(),
     }),
     [session, loading]

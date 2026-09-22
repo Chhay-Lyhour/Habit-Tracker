@@ -17,6 +17,17 @@ const VARIANTS = {
     label: 'text-foreground',
     spinner: '#4B4B4B',
   },
+  danger: {
+    face: 'bg-danger border-danger-edge',
+    label: 'text-white',
+    spinner: '#FFFFFF',
+  },
+  // A destructive action that only opens a confirmation: red text, no fill.
+  dangerQuiet: {
+    face: 'bg-card border-2 border-border',
+    label: 'text-danger',
+    spinner: '#D63B3B',
+  },
 }
 
 export function Button({ variant = 'brand', label, onPress, disabled, busy, className = '' }) {
