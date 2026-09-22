@@ -71,7 +71,27 @@ uploader). **Explicit dimensions matter because the browser can reserve the
 image's box before the file downloads, so the content below does not jump
 when it arrives (Cumulative Layout Shift).**
 
-## Final build
+## Addendum: `/profile` route (after Phase G)
+
+The avatar uploader moved from the tracker to its own `/profile` page,
+matching the Expo app. That page is lazy-loaded too, for the same Zone A
+reasons: it is signed-in only, and it carries upload and validation code that
+`/login` must not pay for. Rolldown puts the header and account menu (Radix,
+Floating UI) that both signed-in pages share into their own chunk.
+
+| Chunk | Size | Gzip |
+| --- | ---: | ---: |
+| `index-*.js` (entry) | 574.28 kB | 170.01 kB |
+| `UserMenu-*.js` (shared: AppShell, account menu, Radix) | 99.14 kB | 32.51 kB |
+| `TrackerPage-*.js` | 22.70 kB | 7.87 kB |
+| `ProfilePage-*.js` | 5.71 kB | 2.51 kB |
+
+`/login` is unchanged (+0.21 kB gzip for the route config). `/` now needs
+40.38 kB gzip beyond the entry chunk, where it needed 40.26 kB before. The
+browser fetches the two files in parallel. `/profile` reuses the shared chunk,
+so opening it from the tracker downloads only 2.51 kB.
+
+## Final build (Phase G, before the addendum)
 
 | Chunk | Size | Gzip |
 | --- | ---: | ---: |

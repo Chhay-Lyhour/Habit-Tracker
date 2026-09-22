@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Outlet, Route, Routes } from 'react-router-dom'
 
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
 import { SectionFallback } from '@/components/app/SectionFallback'
@@ -23,10 +23,30 @@ import { PublicOnlyRoute } from '@/routes/PublicOnlyRoute'
 const loadTracker = () => import('@/pages/TrackerPage')
 const TrackerPage = lazy(() => loadTracker().then((m) => ({ default: m.TrackerPage })))
 
-// Opening the tracker directly: start its chunk now, in parallel with reading
-// the session, instead of only once ProtectedRoute lets it render. The import
-// is cached, so lazy() reuses this same request.
+// /profile (added after Zone A) follows the same rule for the same reasons:
+// signed-in only, and it carries the avatar upload + validation code, which
+// must not ride along in the entry chunk that /login downloads.
+const loadProfile = () => import('@/pages/ProfilePage')
+const ProfilePage = lazy(() => loadProfile().then((m) => ({ default: m.ProfilePage })))
+
+// Opening a page directly: start its chunk now, in parallel with reading the
+// session, instead of only once ProtectedRoute lets it render. The import is
+// cached, so lazy() reuses this same request.
 if (window.location.pathname === '/') loadTracker()
+if (window.location.pathname === '/profile') loadProfile()
+
+/**
+ * Wraps every signed-in page, so the header avatar (on every page) and the
+ * uploader (on /profile) share one profile. Inside the protected route, so it
+ * only loads for a signed-in user and is dropped on sign-out.
+ */
+function SignedInLayout() {
+  return (
+    <ProfileProvider>
+      <Outlet />
+    </ProfileProvider>
+  )
+}
 
 export default function App() {
   return (
@@ -60,20 +80,28 @@ export default function App() {
 
             {/* Signed in only — everything else redirects to /login. */}
             <Route element={<ProtectedRoute />}>
-              <Route
-                path="/"
-                element={
-                  // Inside the protected route, so the profile only loads for
-                  // a signed-in user and is dropped on sign-out. The fallback
-                  // is the same skeleton ProtectedRoute shows, so the hand-off
-                  // from "reading session" to "loading chunk" is invisible.
-                  <ProfileProvider>
+              <Route element={<SignedInLayout />}>
+                <Route
+                  path="/"
+                  element={
+                    // Same skeleton ProtectedRoute shows, so the hand-off from
+                    // "reading session" to "loading chunk" is invisible.
                     <Suspense fallback={<TrackerSkeleton />}>
                       <TrackerPage />
                     </Suspense>
-                  </ProfileProvider>
-                }
-              />
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <Suspense
+                      fallback={<div className="min-h-dvh bg-background" aria-busy="true" />}
+                    >
+                      <ProfilePage />
+                    </Suspense>
+                  }
+                />
+              </Route>
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />
