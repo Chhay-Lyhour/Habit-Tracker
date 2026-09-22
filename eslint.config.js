@@ -5,7 +5,8 @@ import reactRefresh from 'eslint-plugin-react-refresh'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // mobile/ is the Expo app: its own project, lint with `npx expo lint` there.
+  globalIgnores(['dist', 'mobile']),
   {
     files: ['**/*.{js,jsx}'],
     extends: [

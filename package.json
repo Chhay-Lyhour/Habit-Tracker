@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "check:supabase": "node scripts/check-supabase.js",
+    "check:deploy": "node scripts/check-deploy.js",
     "preview": "vite preview",
     "generate-pwa-assets": "pwa-assets-generator"
   },
