@@ -1,17 +1,17 @@
 "use client"
 
-import { useTheme } from "next-themes"
 import { Toaster as Sonner } from "sonner";
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
 const Toaster = ({
   ...props
 }) => {
-  const { theme = "system" } = useTheme()
-
+  // Local edit: next-themes removed (Phase G). The app has no ThemeProvider
+  // and no dark mode, so useTheme() only ever returned undefined. A later
+  // `shadcn add sonner` will bring the import back — undo it again.
   return (
     <Sonner
-      theme={theme}
+      theme="light"
       className="toaster group"
       icons={{
         success: (
