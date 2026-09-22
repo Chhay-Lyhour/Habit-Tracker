@@ -147,10 +147,10 @@ Incognito, production build, mobile preset.
 One sentence per rule in `runtimeCaching` (`vite.config.js`): why that asset
 earns its strategy. _Hand-written._
 
-- **Images and avatars** — _your sentence here._
-- **Supabase REST (`/rest/v1`)** — _your sentence here._
-- **Supabase auth (`/auth/v1`)** — _your sentence here._
-- **Fonts and other static assets** — _your sentence here._
+- Avatars use CacheFirst because a changed avatar is a new URL, so there's nothing to invalidate.
+Auth is NetworkOnly, stated explicitly, because caching a token or sign-out response would be a security bug.
+REST uses NetworkFirst with a short timeout and short max age, trading a small staleness window for offline reads of your own data.
+Fonts use CacheFirst with a long max age because hashed filenames never change content.
 
 ## Hand-written zones
 
