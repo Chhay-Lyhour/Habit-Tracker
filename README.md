@@ -135,12 +135,12 @@ What `vercel.json` does:
 
 Incognito, production build, mobile preset.
 
-| Category | Before V3 | After V3 |
+| Category | Before perf fix | After perf fix |
 | --- | --- | --- |
-| Performance | 1 | 4|
-| Accessibility | 67 | 98 |
-| Best Practices | _fill in_ | _fill in_ |
-| SEO | _fill in_ | _fill in_ |
+| Performance | 73 | 88|
+| Accessibility | 96 | 98 |
+| Best Practices | 100| 100 |
+| SEO | 100| 100 |
 
 ## Caching decisions
 
