@@ -1,8 +1,7 @@
 # Habit Tracker — Expo app
 
-The native port of the web app in the parent folder. This folder is currently
-a **shell**: navigation, styling and the share branch work, and the screens
-are empty placeholders for hand-write Zone C.
+The native port of the web app in the parent folder: sign in, see your
+habits with today's ticks and streaks, tick them off, add new ones.
 
 | Piece | Choice |
 | --- | --- |
@@ -10,6 +9,7 @@ are empty placeholders for hand-write Zone C.
 | Navigation | Expo Router (file-based, built on React Navigation). Routes in `src/app/` |
 | Styling | NativeWind 4.2.7 on **Tailwind 3.4** (NativeWind 4 does not run on Tailwind 4) |
 | Tokens | `tailwind.config.js` restates the web `:root` tokens: `grass`, `sky`, `streak`, `danger` (+ `-bright`/`-edge`), `rounded-card`, `rounded-control` |
+| Data | Supabase, with the session in AsyncStorage |
 
 ## Running it
 
@@ -20,22 +20,38 @@ cp .env.example .env
 npx expo start
 ```
 
-Then press `i` (iOS simulator) or `a` (Android emulator), or scan the QR code
-with Expo Go on a phone. Everything here is in Expo Go's bundled modules, so
-you do not need a development build yet.
+Fill in `.env` with the same project URL and anon key as the web app, under
+`EXPO_PUBLIC_` names. Then scan the QR code with **Expo Go** on your phone
+(same Wi-Fi), or press `a` / `i` for an emulator or simulator. Restart
+`expo start` after editing `.env`.
+
+Sign-up is web-only for now: create the account on the web app, then sign
+in here.
 
 ## Layout
 
 ```
-src/app/_layout.jsx   Stack navigator + header Share button; imports global.css
-src/app/index.jsx     List screen (shell). Zone C: FlatList of habits
-src/app/add.jsx       Add screen (shell, modal). Zone C: the form
-src/lib/share.js      The ONLY Platform.select in the codebase
+src/app/_layout.jsx        AuthProvider + Stack with Stack.Protected guards; splash until the session is read
+src/app/login.jsx          Sign in (reuses the web validators)
+src/app/index.jsx          List: FlatList, skeleton / error / empty, tick, pull to refresh
+src/app/add.jsx            Add (modal): form → createHabit → router.back()
+src/components/            Button (3D), HabitRow, StreakBadge, States
+src/context/AuthProvider   Session context (same shape as the web one)
+src/lib/supabase.js        Native Supabase client (AsyncStorage, no URL session detection)
+src/lib/share.js           The ONLY Platform.select in the codebase
 ```
 
-Before importing anything from the web app's `src/`, read
-`../docs/platform-audit.md`. Several of those files use browser-only APIs
-that throw on native.
+## Shared with the web app
+
+`@shared/*` → `../src/lib/*` (see `jsconfig.json` and `metro.config.js`).
+Imported unchanged: `habits.js` (every query), `streaks.js`, `validation.js`.
+Before importing anything else from there, check `../docs/platform-audit.md`:
+several web files use browser-only APIs that throw on native.
+
+## Not ported yet
+
+Offline queue, edit/delete, avatars, sign-up. Ticking is not optimistic
+here: the tick shows a spinner until the server confirms it.
 
 ## Env
 

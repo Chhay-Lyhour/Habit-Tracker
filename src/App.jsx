@@ -8,29 +8,25 @@ import { UpdateToast } from '@/components/app/UpdateToast'
 import { Toaster } from '@/components/ui/sonner'
 import { AuthProvider } from '@/context/AuthProvider'
 import { ProfileProvider } from '@/context/ProfileProvider'
+import { LoginPage } from '@/pages/LoginPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+import { SignupPage } from '@/pages/SignupPage'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicOnlyRoute } from '@/routes/PublicOnlyRoute'
 
-// Each page is its own chunk, so /login does not download the tracker (and
-// its dialogs, avatar upload and offline queue) before it can paint. The
-// service worker precaches every chunk after the first visit, so later
-// navigations are instant and work offline.
-const named = (load, name) => lazy(() => load().then((m) => ({ default: m[name] })))
+// Only the tracker is split out (Zone A). It is ~126 kB of the app — dialogs,
+// dropdown menu, avatar upload, offline queue — and a signed-out visitor on
+// /login never needs it, so it must not delay the login form's first paint.
+// Login, signup and 404 stay in the entry chunk: together they are under
+// 6 kB, and a chunk of their own would cost a network round trip before the
+// very first screen a new user sees, to save almost nothing.
 const loadTracker = () => import('@/pages/TrackerPage')
-const LoginPage = named(() => import('@/pages/LoginPage'), 'LoginPage')
-const SignupPage = named(() => import('@/pages/SignupPage'), 'SignupPage')
-const TrackerPage = named(loadTracker, 'TrackerPage')
-const NotFoundPage = named(() => import('@/pages/NotFoundPage'), 'NotFoundPage')
+const TrackerPage = lazy(() => loadTracker().then((m) => ({ default: m.TrackerPage })))
 
 // Opening the tracker directly: start its chunk now, in parallel with reading
 // the session, instead of only once ProtectedRoute lets it render. The import
 // is cached, so lazy() reuses this same request.
 if (window.location.pathname === '/') loadTracker()
-
-/** Plain background while an auth page's chunk loads — no layout to jump. */
-function BlankPage() {
-  return <div className="min-h-dvh bg-background" aria-busy="true" />
-}
 
 export default function App() {
   return (
@@ -58,22 +54,8 @@ export default function App() {
           <Routes>
             {/* Signed out only — a signed-in visitor gets sent to the tracker. */}
             <Route element={<PublicOnlyRoute />}>
-              <Route
-                path="/login"
-                element={
-                  <Suspense fallback={<BlankPage />}>
-                    <LoginPage />
-                  </Suspense>
-                }
-              />
-              <Route
-                path="/signup"
-                element={
-                  <Suspense fallback={<BlankPage />}>
-                    <SignupPage />
-                  </Suspense>
-                }
-              />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
             </Route>
 
             {/* Signed in only — everything else redirects to /login. */}
@@ -94,14 +76,7 @@ export default function App() {
               />
             </Route>
 
-            <Route
-              path="*"
-              element={
-                <Suspense fallback={<BlankPage />}>
-                  <NotFoundPage />
-                </Suspense>
-              }
-            />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </ErrorBoundary>
 

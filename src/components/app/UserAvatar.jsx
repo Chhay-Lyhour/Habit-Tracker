@@ -19,12 +19,22 @@ function initialsFrom(email) {
  * not — or while the image itself is still downloading.
  *
  * `src` wins over the stored URL so the uploader can show a local preview.
+ *
+ * `size` is the rendered size in px and must match the size-* class. It is
+ * written onto the <img> as width/height so the box is reserved even before
+ * CSS applies — no layout shift when the photo arrives.
+ *
+ * Deliberately NOT loading="lazy" (Zone B): every avatar is above the fold
+ * (header, and the first card on the tracker), where lazy loading only delays
+ * the image. It would also do nothing here — Radix preloads the src with
+ * `new Image()` and renders the <img> only once it has loaded.
  */
 export function UserAvatar({
   src,
   email,
   alt = '',
   loading = false,
+  size = 40,
   className,
   fallbackClassName,
 }) {
@@ -36,7 +46,7 @@ export function UserAvatar({
 
   return (
     <Avatar className={cn('size-10', className)}>
-      {src ? <AvatarImage src={src} alt={alt} /> : null}
+      {src ? <AvatarImage src={src} alt={alt} width={size} height={size} /> : null}
       <AvatarFallback
         className={cn(
           'bg-sky/10 font-extrabold text-sky',

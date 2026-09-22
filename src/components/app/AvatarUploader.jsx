@@ -137,6 +137,7 @@ export function AvatarUploader() {
             src={previewUrl ?? profile?.avatar_url}
             email={user?.email}
             alt={previewUrl ? 'Preview of your new avatar' : 'Your avatar'}
+            size={80}
             className="size-20 ring-4 ring-sky-bright/30"
             fallbackClassName="text-2xl"
           />

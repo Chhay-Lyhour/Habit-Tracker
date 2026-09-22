@@ -33,10 +33,14 @@ clipboard and dialog fallbacks. It is not shared code.
 
 ## Leaks: web-only APIs in code the port would reuse
 
-Nothing below is wrapped or fixed. Each item is **flagged**, and the port
-(Zone C) decides what to do. The mobile app does **not** import anything from
-`src/` yet, so none of these can break the Expo build today. They become live
-the moment a file is imported.
+None of these files was wrapped or patched. The Expo app (Zone C) imports
+**only** the three portable files below, through the `@shared/*` alias
+(`mobile/jsconfig.json` + `watchFolders` in `mobile/metro.config.js`). Leaks
+1–3 are solved by substitution: `habits.js` imports `@/lib/supabase`, and in
+the Expo project `@/` points at `mobile/src`, so it gets the native client
+(`mobile/src/lib/supabase.js`: AsyncStorage, `detectSessionInUrl: false`).
+The web build is untouched. Leaks 4–11 are in files the Expo app never
+imports; the port has its own `AuthProvider`, and no offline queue yet.
 
 ### Portable as-is
 
