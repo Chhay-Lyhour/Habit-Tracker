@@ -1,0 +1,4 @@
+# Without this file, the SPA rewrite answers /robots.txt with index.html,
+# which crawlers (and Lighthouse's SEO audit) treat as an invalid robots.txt.
+User-agent: *
+Allow: /

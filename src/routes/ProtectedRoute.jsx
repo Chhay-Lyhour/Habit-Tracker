@@ -1,8 +1,6 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 
-import { AppShell } from '@/components/app/AppShell'
-import { HabitListSkeleton } from '@/components/app/HabitListSkeleton'
-import { PageHeader } from '@/components/app/PageHeader'
+import { TrackerSkeleton } from '@/components/app/TrackerSkeleton'
 import { useAuth } from '@/hooks/useAuth'
 
 /**
@@ -19,14 +17,7 @@ export function ProtectedRoute() {
   const { session, loading } = useAuth()
   const location = useLocation()
 
-  if (loading) {
-    return (
-      <AppShell>
-        <PageHeader title="Today" />
-        <HabitListSkeleton />
-      </AppShell>
-    )
-  }
+  if (loading) return <TrackerSkeleton />
 
   if (!session) {
     // Remember where they were headed so the login form can send them back.

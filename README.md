@@ -137,8 +137,8 @@ Incognito, production build, mobile preset.
 
 | Category | Before V3 | After V3 |
 | --- | --- | --- |
-| Performance | _fill in_ | _fill in_ |
-| Accessibility | _fill in_ | _fill in_ |
+| Performance | 1 | 4|
+| Accessibility | 67 | 98 |
 | Best Practices | _fill in_ | _fill in_ |
 | SEO | _fill in_ | _fill in_ |
 
