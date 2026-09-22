@@ -12,11 +12,14 @@ import { HabitCard } from '@/components/app/HabitCard'
 import { HabitFormDialog } from '@/components/app/HabitFormDialog'
 import { HabitListSkeleton } from '@/components/app/HabitListSkeleton'
 import { PageHeader } from '@/components/app/PageHeader'
+import { QueuedHabitCard } from '@/components/app/QueuedHabitCard'
 import { SectionFallback } from '@/components/app/SectionFallback'
+import { ShareButton } from '@/components/app/ShareButton'
 import { StatsSection } from '@/components/app/StatsSection'
 import { UserMenu } from '@/components/app/UserMenu'
 import { Button } from '@/components/ui/button'
 import { useHabits } from '@/hooks/useHabits'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { friendlyDataError } from '@/lib/habits'
 
 const CHEERS = [
@@ -25,6 +28,19 @@ const CHEERS = [
   'Done. See you tomorrow.',
   'Another one down.',
 ]
+
+function handleQueueSynced({ synced, failed }) {
+  if (synced > 0) {
+    toast.success(
+      `Back online. Synced ${synced} ${synced === 1 ? 'habit' : 'habits'}.`
+    )
+  }
+  if (failed > 0) {
+    toast.error(
+      `${failed} queued ${failed === 1 ? 'habit' : 'habits'} didn’t sync. Tap Retry on ${failed === 1 ? 'it' : 'them'}.`
+    )
+  }
+}
 
 export function TrackerPage() {
   const {
@@ -35,12 +51,21 @@ export function TrackerPage() {
     error,
     saving,
     busyHabitIds,
+    queued,
     refresh,
     toggleToday,
     create,
     update,
     remove,
-  } = useHabits()
+    syncNow,
+    discard,
+  } = useHabits({ onQueueSynced: handleQueueSynced })
+
+  // Only creating works offline (it queues). Everything that needs the server
+  // right now is disabled while the browser reports offline — and if it lies
+  // (online, but no real connection), the request fails and friendlyDataError
+  // says "You're offline" instead.
+  const online = useOnlineStatus()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editingHabit, setEditingHabit] = useState(null)
@@ -62,8 +87,14 @@ export function TrackerPage() {
         await update(editingHabit.id, values)
         toast.success('Saved.')
       } else {
-        await create(values)
-        toast.success('Nice! Habit added.')
+        const { queued: wasQueued } = await create(values)
+        if (wasQueued) {
+          toast('Saved offline, will sync when you’re back online.', {
+            icon: '🕒',
+          })
+        } else {
+          toast.success('Nice! Habit added.')
+        }
       }
       setFormOpen(false)
       setEditingHabit(null)
@@ -99,20 +130,46 @@ export function TrackerPage() {
     (habit) => habit.is_active && doneToday.has(habit.id)
   ).length
 
+  function handleDiscard(itemId) {
+    discard(itemId)
+    toast('Queued habit discarded.')
+  }
+
+  const queuedList =
+    queued.length > 0 ? (
+      <ul className="space-y-4" aria-label="Waiting to sync">
+        {queued.map((item) => (
+          <li key={item.id}>
+            <QueuedHabitCard
+              item={item}
+              offline={!online}
+              onRetry={syncNow}
+              onDiscard={handleDiscard}
+            />
+          </li>
+        ))}
+      </ul>
+    ) : null
+
   function renderBody() {
     if (status === 'loading') return <HabitListSkeleton />
 
     if (status === 'error') {
+      // Queued habits live in localStorage, so they can still be shown when
+      // the list itself failed to load (typically: opened offline).
       return (
-        <ErrorState
-          title="Could not load your habits"
-          description={friendlyDataError(error)}
-          onRetry={refresh}
-        />
+        <div className="space-y-4">
+          <ErrorState
+            title="Could not load your habits"
+            description={friendlyDataError(error)}
+            onRetry={refresh}
+          />
+          {queuedList}
+        </div>
       )
     }
 
-    if (habits.length === 0) {
+    if (habits.length === 0 && queued.length === 0) {
       return (
         <EmptyState
           emoji="🌱"
@@ -129,26 +186,39 @@ export function TrackerPage() {
     }
 
     return (
-      <ul className="space-y-4">
-        {habits.map((habit) => (
-          <li key={habit.id}>
-            <HabitCard
-              habit={habit}
-              completed={doneToday.has(habit.id)}
-              streak={streaks.get(habit.id) ?? 0}
-              pending={busyHabitIds.has(habit.id)}
-              onToggle={handleToggle}
-              onEdit={openEdit}
-              onDelete={setDeletingHabit}
-            />
-          </li>
-        ))}
-      </ul>
+      <div className="space-y-4">
+        {habits.length > 0 ? (
+          <ul className="space-y-4">
+            {habits.map((habit) => (
+              <li key={habit.id}>
+                <HabitCard
+                  habit={habit}
+                  completed={doneToday.has(habit.id)}
+                  streak={streaks.get(habit.id) ?? 0}
+                  pending={busyHabitIds.has(habit.id)}
+                  offline={!online}
+                  onToggle={handleToggle}
+                  onEdit={openEdit}
+                  onDelete={setDeletingHabit}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {queuedList}
+      </div>
     )
   }
 
   return (
-    <AppShell actions={<UserMenu />}>
+    <AppShell
+      actions={
+        <>
+          <ShareButton />
+          <UserMenu />
+        </>
+      }
+    >
       <PageHeader
         title="Today"
         description={
@@ -206,7 +276,7 @@ export function TrackerPage() {
       <section aria-label="Your habits">
         <ErrorBoundary
           name="habits"
-          resetKeys={[habits]}
+          resetKeys={[habits, queued]}
           fallback={({ reset }) => (
             <SectionFallback label="Your habits" emoji="🌱" onRetry={reset} />
           )}

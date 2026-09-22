@@ -22,7 +22,9 @@ import { Button } from '@/components/ui/button'
 export function DeleteHabitDialog({ habit, saving, onConfirm, onOpenChange }) {
   return (
     <AlertDialog open={Boolean(habit)} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      {/* The generated max-w-xs is exactly 320px — edge to edge on an
+          iPhone SE. Below sm, keep a 1rem gutter each side instead. */}
+      <AlertDialogContent className="max-sm:max-w-[calc(100%-2rem)]!">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{habit?.title}”?</AlertDialogTitle>
           <AlertDialogDescription>

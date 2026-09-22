@@ -42,7 +42,12 @@ export function SectionFallback({
           {label ? `${label} took a tumble.` : title}
         </span>
         {onRetry ? (
-          <Button variant="quiet" size="sm" onClick={onRetry}>
+          <Button
+            variant="quiet"
+            size="touch"
+            onClick={onRetry}
+            className="shrink-0 px-3"
+          >
             <RotateCw aria-hidden="true" />
             Try again
           </Button>

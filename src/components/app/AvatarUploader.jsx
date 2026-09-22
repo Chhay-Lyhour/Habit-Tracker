@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAuth } from '@/hooks/useAuth'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import { useProfile } from '@/hooks/useProfile'
 import { friendlyProfileError } from '@/lib/profile'
 import { ALLOWED_AVATAR_TYPES, validateAvatar } from '@/lib/validateAvatar'
@@ -33,6 +34,9 @@ const INPUT_ID = 'avatar-file'
 export function AvatarUploader() {
   const { user } = useAuth()
   const { profile, status, error, uploading, refresh, upload } = useProfile()
+  // Picking and previewing work offline; uploading does not, and avatar
+  // uploads are not queued (a file is too big for localStorage).
+  const online = useOnlineStatus()
 
   const [selected, setSelected] = useState(null) // { file, url } | null
   const [fieldError, setFieldError] = useState(null)
@@ -185,13 +189,19 @@ export function AvatarUploader() {
                 variant="quiet"
                 size="touch"
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={uploading || !online}
                 className="shrink-0"
               >
                 <RotateCw aria-hidden="true" />
                 Retry
               </Button>
             </div>
+          ) : null}
+
+          {selected && !online ? (
+            <p id="avatar-offline" className="text-sm font-bold text-muted-foreground">
+              You’re offline. Save your photo when you’re back online.
+            </p>
           ) : null}
 
           {selected ? (
@@ -202,8 +212,9 @@ export function AvatarUploader() {
                 variant="sky"
                 size="touch"
                 onClick={handleUpload}
-                disabled={uploading}
+                disabled={uploading || !online}
                 aria-busy={uploading || undefined}
+                aria-describedby={online ? undefined : 'avatar-offline'}
               >
                 {uploading ? (
                   <Loader2 aria-hidden="true" className="animate-spin" />

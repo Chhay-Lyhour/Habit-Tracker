@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
+import { clearQueue } from '@/lib/offlineQueue'
+import { clearRuntimeCaches } from '@/lib/pwa'
 import { supabase } from '@/lib/supabase'
 import { AuthContext } from '@/context/auth-context'
 
@@ -42,9 +44,13 @@ export function AuthProvider({ children }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession)
       setLoading(false)
+
+      // Also covers signing out in another tab, or the session ending on its
+      // own — not only our signOut() below.
+      if (event === 'SIGNED_OUT') clearRuntimeCaches()
     })
 
     return () => {
@@ -75,8 +81,21 @@ export function AuthProvider({ children }) {
   }, [])
 
   const signOut = useCallback(async () => {
+    // Read before signing out — afterwards there is no session to ask.
+    const { data } = await supabase.auth.getSession()
+    const userId = data.session?.user?.id
+
     const { error } = await supabase.auth.signOut()
     if (error) throw error
+
+    // Unsynced offline habits belong to this session only. UserMenu has
+    // already warned (and got a confirm) if there were any.
+    clearQueue(userId)
+
+    // Service-worker caches are keyed by URL, not by user, and outlive the
+    // session. Clear them before the next person gets the device. Awaited so
+    // it is done before /login renders; never throws.
+    await clearRuntimeCaches()
   }, [])
 
   const value = useMemo(

@@ -25,6 +25,7 @@ export function HabitCard({
   completed = false,
   streak = 0,
   pending = false,
+  offline = false,
   onToggle,
   onEdit,
   onDelete,
@@ -52,13 +53,17 @@ export function HabitCard({
           <button
             type="button"
             onClick={handleToggle}
-            disabled={pending}
+            // Ticking needs the server; offline it is disabled rather than
+            // left to fail. (Only creating is queued.)
+            disabled={pending || offline}
             aria-pressed={completed}
             aria-describedby={labelId}
             aria-label={
-              completed
-                ? `Mark ${habit.title} as not done today`
-                : `Mark ${habit.title} as done today`
+              offline
+                ? `${habit.title} — ticking is unavailable while you're offline`
+                : completed
+                  ? `Mark ${habit.title} as not done today`
+                  : `Mark ${habit.title} as done today`
             }
             className={cn(
               'grid size-12 place-items-center rounded-full border-2 outline-none transition-colors',
@@ -115,18 +120,29 @@ export function HabitCard({
               variant="ghost"
               size="touch-icon"
               className="shrink-0"
-              aria-label={`Options for ${habit.title}`}
+              disabled={offline}
+              aria-label={
+                offline
+                  ? `Options for ${habit.title} — unavailable while you're offline`
+                  : `Options for ${habit.title}`
+              }
             >
               <MoreVertical aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => onEdit?.(habit)}>
+            {/* min-h-12: the generated items are ~28px, under the 48px
+                tap-target rule. */}
+            <DropdownMenuItem
+              className="min-h-12 text-base"
+              onSelect={() => onEdit?.(habit)}
+            >
               <Pencil aria-hidden="true" />
               Edit habit
             </DropdownMenuItem>
             <DropdownMenuItem
+              className="min-h-12 text-base"
               variant="destructive"
               onSelect={() => onDelete?.(habit)}
             >
