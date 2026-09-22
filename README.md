@@ -138,7 +138,7 @@ Incognito, production build, mobile preset.
 | Category | Before perf fix | After perf fix |
 | --- | --- | --- |
 | Performance | 73 | 88|
-| Accessibility | 96 | 98 |
+| Accessibility | 96 | 96 |
 | Best Practices | 100| 100 |
 | SEO | 100| 100 |
 
