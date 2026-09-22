@@ -3,7 +3,6 @@ import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { AppShell } from '@/components/app/AppShell'
-import { AvatarUploader } from '@/components/app/AvatarUploader'
 import { DeleteHabitDialog } from '@/components/app/DeleteHabitDialog'
 import { EmptyState } from '@/components/app/EmptyState'
 import { ErrorBoundary } from '@/components/app/ErrorBoundary'
@@ -241,21 +240,6 @@ export function TrackerPage() {
         resetKeys: a successful refetch hands the section fresh data, so an
         errored section gets another go without a click.
       */}
-      <section aria-label="Your profile" className="mb-8">
-        <ErrorBoundary
-          name="avatar"
-          fallback={({ reset }) => (
-            <SectionFallback
-              label="Your profile"
-              emoji="🖼️"
-              onRetry={reset}
-            />
-          )}
-        >
-          <AvatarUploader />
-        </ErrorBoundary>
-      </section>
-
       <section aria-label="Your stats" className="mb-8">
         <ErrorBoundary
           name="stats"

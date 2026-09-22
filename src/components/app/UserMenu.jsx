@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { LogOut } from 'lucide-react'
+import { LogOut, UserRound } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { UserAvatar } from '@/components/app/UserAvatar'
@@ -81,6 +82,15 @@ export function UserMenu() {
           </DropdownMenuLabel>
 
           <DropdownMenuSeparator />
+
+          {/* asChild: a real link, so /profile can be opened in a new tab
+              and the router handles it without a reload. */}
+          <DropdownMenuItem asChild className="min-h-12 text-base">
+            <Link to="/profile">
+              <UserRound aria-hidden="true" />
+              Profile
+            </Link>
+          </DropdownMenuItem>
 
           <DropdownMenuItem
             className="min-h-12 text-base"
