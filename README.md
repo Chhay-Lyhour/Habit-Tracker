@@ -148,9 +148,9 @@ One sentence per rule in `runtimeCaching` (`vite.config.js`): why that asset
 earns its strategy. _Hand-written._
 
 - Avatars use CacheFirst because a changed avatar is a new URL, so there's nothing to invalidate.
-Auth is NetworkOnly, stated explicitly, because caching a token or sign-out response would be a security bug.
-REST uses NetworkFirst with a short timeout and short max age, trading a small staleness window for offline reads of your own data.
-Fonts use CacheFirst with a long max age because hashed filenames never change content.
+- Auth is NetworkOnly, stated explicitly, because caching a token or sign-out response would be a security bug.
+- REST uses NetworkFirst with a short timeout and short max age, trading a small staleness window for offline reads of your own data.
+- Fonts use CacheFirst with a long max age because hashed filenames never change content.
 
 ## Hand-written zones
 
