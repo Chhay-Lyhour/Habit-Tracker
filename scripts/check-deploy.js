@@ -84,6 +84,17 @@ step(`1. Serving ${site}`)
 
 let html = ''
 try {
+  // Vercel Deployment Protection (on by default for preview URLs) answers
+  // everything with a redirect to its login page, which would otherwise be
+  // "checked" in place of the app and fail every step confusingly.
+  const probe = await fetch(`${site}/`, { redirect: 'manual' })
+  if (/vercel\.com\/sso-api/.test(probe.headers.get('location') ?? '')) {
+    bad('This URL is behind Vercel Deployment Protection (redirects to the Vercel login).')
+    warn('Open it in a browser where you are logged in to Vercel and use the manual steps in')
+    warn('docs/deploy-check.md, or run this script against the production URL instead.')
+    process.exit(1)
+  }
+
   const res = await fetch(`${site}/`)
   html = await res.text()
   if (res.ok && html.includes('<div id="root">')) ok('/ serves the app shell')

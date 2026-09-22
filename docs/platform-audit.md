@@ -40,7 +40,11 @@ None of these files was wrapped or patched. The Expo app (Zone C) imports
 the Expo project `@/` points at `mobile/src`, so it gets the native client
 (`mobile/src/lib/supabase.js`: AsyncStorage, `detectSessionInUrl: false`).
 The web build is untouched. Leaks 4–11 are in files the Expo app never
-imports; the port has its own `AuthProvider`, and no offline queue yet.
+imports. The port has native twins instead: its own `AuthProvider` (leak 4),
+`useOnlineStatus` on NetInfo (leaks 7 and 9), an AsyncStorage `offlineQueue`
+with `expo-crypto` uuids (leaks 7 and 8), and `lib/avatar.js`, which reads
+the picked photo's bytes and hands the unchanged web `validateAvatar` the
+shape it expects (leak 11).
 
 ### Portable as-is
 
